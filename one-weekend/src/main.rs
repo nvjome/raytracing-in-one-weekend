@@ -1,4 +1,8 @@
-use raytracer::{ray::Ray3, vector::{Point3, Vector3}, color::{ColorRGB, ppm_preamble, ppm_write_pixel}};
+use raytracer::{
+    ray::Ray3,
+    vector::{Vector3, Point3},
+    color::{ColorRGB, ppm_preamble, ppm_write_pixel},
+};
 
 fn hit_sphere(center: &Point3, radius: f64, ray: Ray3) -> bool {
     let vect_oc = *center - ray.origin;
@@ -21,7 +25,7 @@ fn ray_color(ray: &Ray3) -> ColorRGB {
 
 fn main() {
     // Image
-    let aspect_ratio = 16.0/9.0;
+    let aspect_ratio = 16.0 / 9.0;
     let image_width = 400;
     let image_height = (((image_width as f64) / aspect_ratio) as i32).max(1);
 
@@ -40,7 +44,7 @@ fn main() {
     let pixel_delta_v = viewport_v / image_height as f64;
 
     let viewport_origin: Point3 = camera_center + Vector3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
-    let pixel_origin: Point3 = viewport_origin + 0.5 * (viewport_u + viewport_v);
+    let pixel_origin: Point3 = viewport_origin + 0.5 * (pixel_delta_u + pixel_delta_v);
 
     // PBM preamble
     ppm_preamble(image_width, image_height);

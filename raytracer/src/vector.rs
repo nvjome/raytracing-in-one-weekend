@@ -49,7 +49,7 @@ impl ops::Add for Vector3 {
     }
 }
 
-impl ops::AddAssign<Vector3> for Vector3 {
+/* impl ops::AddAssign<Vector3> for Vector3 {
     fn add_assign(&mut self, other: Vector3) {
         *self = Vector3 {
             x: self.x + other.x,
@@ -57,7 +57,7 @@ impl ops::AddAssign<Vector3> for Vector3 {
             z: self.z + other.z,
         }
     }
-}
+} */
 
 impl ops::Sub for Vector3 {
     type Output = Vector3;
@@ -71,7 +71,7 @@ impl ops::Sub for Vector3 {
     }
 }
 
-impl ops::SubAssign<Vector3> for Vector3 {
+/* impl ops::SubAssign<Vector3> for Vector3 {
     fn sub_assign(&mut self, other: Vector3) {
         *self = Vector3 {
             x: self.x - other.x,
@@ -79,7 +79,7 @@ impl ops::SubAssign<Vector3> for Vector3 {
             z: self.z - other.z,
         }
     }
-}
+} */
 
 impl ops::Mul<f64> for Vector3 {
     type Output = Vector3;
@@ -101,13 +101,13 @@ impl ops::Mul<Vector3> for f64 {
     }
 }
 
-impl ops::MulAssign<f64> for Vector3 {
+/* impl ops::MulAssign<f64> for Vector3 {
     fn mul_assign(&mut self, rhs: f64) {
         self.x *= rhs;
         self.y *= rhs;
         self.z *= rhs;
     }
-}
+} */
 
 impl ops::Div<f64> for Vector3 {
     type Output = Vector3;
@@ -121,12 +121,12 @@ impl ops::Div<f64> for Vector3 {
     }
 }
 
-impl ops::DivAssign<f64> for Vector3 {
+/* impl ops::DivAssign<f64> for Vector3 {
     fn div_assign(&mut self, rhs: f64) {
         self.x /= rhs;
         self.y /= rhs;
         self.z /= rhs;
     }
-}
+} */
 
 pub type Point3 = Vector3;
