@@ -1,11 +1,12 @@
 use raytracer::{
     ray::Ray3,
-    vector::{Vector3, Point3},
+    vector::Vector3,
+    point::Point3,
     color::{ColorRGB, ppm_preamble, ppm_write_pixel},
 };
 
 fn hit_sphere(center: &Point3, radius: f64, ray: Ray3) -> bool {
-    let vect_oc = *center - ray.origin;
+    let vect_oc = ray.origin.get_vector_to(center);
     let a = ray.direction.dot(ray.direction);
     let b = -2.0 * ray.direction.dot(vect_oc);
     let c = vect_oc.dot(vect_oc) - radius*radius;
@@ -53,7 +54,7 @@ fn main() {
         eprint!("\rScanlines remaining: {}   ", image_height - j);
         for i in 0..image_width {
             let pixel_center: Point3 = pixel_origin + (i as f64 * pixel_delta_u) + (j as f64 * pixel_delta_v);
-            let ray_dir = pixel_center - camera_center;
+            let ray_dir = camera_center.get_vector_to(&pixel_center);
             let ray = Ray3::new(camera_center, ray_dir);
             ppm_write_pixel(ray_color(&ray));
         }

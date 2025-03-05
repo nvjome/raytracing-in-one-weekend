@@ -1,6 +1,6 @@
 use std::ops;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Vector3 {
     pub x: f64,
     pub y: f64,
@@ -130,3 +130,21 @@ impl ops::Div<f64> for Vector3 {
 } */
 
 pub type Point3 = Vector3;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn length() {
+        let v = Vector3::new(1.0, 1.0, 1.0);
+        assert_eq!(v.length(), (3.0_f64).sqrt());
+    }
+
+    #[test]
+    fn add() {
+        let v1 = Vector3::new(1.0, 2.0, 3.0);
+        let v2 = Vector3::new(-1.0, -2.0, -3.0);
+        assert_eq!(v1 + v2, Vector3::new(0.0, 0.0, 0.0));
+    }
+}
