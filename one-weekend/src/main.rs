@@ -7,15 +7,15 @@ use raytracer::{
 
 fn hit_sphere(center: Point3, radius: f64, ray: Ray3) -> f64 {
     let vect_oc = center - ray.origin;
-    let a = ray.direction.dot(ray.direction);
-    let b = -2.0 * ray.direction.dot(vect_oc);
-    let c = vect_oc.dot(vect_oc) - radius*radius;
-    let discriminant = b*b - 4.0*a*c;
+    let a = ray.direction.length_squared();
+    let h = ray.direction.dot(vect_oc);
+    let c = vect_oc.length_squared() - radius*radius;
+    let discriminant = h*h - a*c;
 
     if discriminant < 0.0 {
         return -1.0;
     } else {
-        return ((-1.0 * b) - discriminant.sqrt()) / (2.0*a);
+        return (h - discriminant.sqrt()) / a;
     }
 }
 
