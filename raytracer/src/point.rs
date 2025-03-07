@@ -13,13 +13,13 @@ impl Point3 {
         Point3 {x, y, z}
     }
 
-    pub fn get_vector_to(&self, point: &Point3) -> Vector3 {
+    /* pub fn vector_to(self, point: Point3) -> Vector3 {
         Vector3 {
             x: point.x - self.x,
             y: point.y - self.y,
             z: point.z - self.z,
         }
-    }
+    } */
 }
 
 impl ops::Add<Vector3> for Point3 {
@@ -70,6 +70,18 @@ impl ops::Sub<Point3> for Vector3 {
     }
 }
 
+impl ops::Sub<Point3> for Point3 {
+    type Output = Vector3;
+
+    fn sub(self, other: Point3) -> Vector3 {
+        Vector3 {
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -83,9 +95,9 @@ mod tests {
     }
 
     #[test]
-    fn displacement() {
-        let p1 = Point3::new(1.0, -2.0, 3.0);
-        let p2 = Point3::new(4.0, 5.0, -6.0);
-        assert_eq!(p1.get_vector_to(&p2), Vector3::new(3.0, 7.0, -9.0));
+    fn sub_points() {
+        let p1 = Point3::new(0.0, 0.0, 0.0);
+        let p2 = Point3::new(0.0, 0.0, -2.0);
+        assert_eq!(p2 - p1, Vector3::new(0.0, 0.0, -2.0));
     }
 }

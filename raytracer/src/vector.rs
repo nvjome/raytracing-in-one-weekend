@@ -129,7 +129,7 @@ impl ops::Div<f64> for Vector3 {
     }
 } */
 
-pub type Point3 = Vector3;
+// pub type Point3 = Vector3;
 
 #[cfg(test)]
 mod tests {
@@ -146,5 +146,13 @@ mod tests {
         let v1 = Vector3::new(1.0, 2.0, 3.0);
         let v2 = Vector3::new(-1.0, -2.0, -3.0);
         assert_eq!(v1 + v2, Vector3::new(0.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn dot() {
+        let v1 = Vector3::new(-6.0, 8.0, 0.0);
+        let v2 = Vector3::new(5.0, 12.0, 0.0);
+        assert_eq!(v1.dot(v2), v2.dot(v1));
+        assert_eq!(v1.dot(v2), 66.0);
     }
 }
