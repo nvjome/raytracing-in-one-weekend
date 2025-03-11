@@ -1,5 +1,6 @@
 use std::f64::INFINITY;
 
+#[derive(Debug, Default)]
 pub struct Interval {
     pub min: f64,
     pub max: f64,

@@ -2,7 +2,7 @@ use std::ops;
 
 use crate::vector::Vector3;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct ColorRGB {
     pub r: f64,
     pub g: f64,

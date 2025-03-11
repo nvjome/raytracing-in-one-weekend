@@ -1,5 +1,6 @@
 use crate::{hittable::{HitRecord, Hittable}, interval::Interval, point::Point3, ray::Ray3};
 
+#[derive(Debug, Default)]
 pub struct Sphere {
     center: Point3,
     radius: f64,
