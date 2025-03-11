@@ -9,19 +9,19 @@ impl Sphere {
     pub fn new(center: Point3, radius: f64) -> Sphere {
         Sphere {
             center,
-            radius,
+            radius: radius.max(0.0),
         }
     }
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray: &Ray3, t_min: f64, t_max: f64, record: &mut HitRecord) -> bool {
+    fn hit(&self, ray: Ray3, t_min: f64, t_max: f64, record: &mut HitRecord) -> bool {
         let vect_oc = self.center - ray.origin;
         let a = ray.direction.length_squared();
         let h = ray.direction.dot(vect_oc);
         let c = vect_oc.length_squared() - self.radius*self.radius;
-        let discriminant = h*h - a*c;
 
+        let discriminant = h*h - a*c;
         if discriminant < 0.0 {
             return false;
         }
@@ -40,7 +40,9 @@ impl Hittable for Sphere {
 
         record.t = root;
         record.p = ray.at(record.t);
-        record.normal = (record.p - self.center) / self.radius;
+        // record.normal = (record.p - self.center) / self.radius;
+        let outward_normal = (record.p - self.center) / self.radius;
+        record.set_face_normal(ray, outward_normal);
 
         return true;
     }

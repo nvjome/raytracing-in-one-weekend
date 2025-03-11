@@ -9,7 +9,10 @@ pub struct ColorRGB {
 
 impl ColorRGB {
     pub fn new(r: f64, g: f64, b: f64) -> ColorRGB {
-        ColorRGB {r, g, b}
+        ColorRGB {
+            r: r.clamp(0.0, 1.0),
+            g: g.clamp(0.0, 1.0),
+            b: b.clamp(0.0, 1.0)}
     }
 }
 
