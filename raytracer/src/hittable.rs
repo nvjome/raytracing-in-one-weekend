@@ -1,8 +1,8 @@
-use crate::{ray::Ray3, point::Point3, vector::Vector3};
+use crate::{interval::Interval, point::Point3, ray::Ray3, vector::Vector3};
 
 pub trait Hittable {
     #[allow(unused_variables)]
-    fn hit(&self, ray: Ray3, t_min: f64, t_max: f64, record: &mut HitRecord) -> bool { false }
+    fn hit(&self, ray: Ray3, interval: Interval, record: &mut HitRecord) -> bool { false }
 }
 
 #[derive(Copy, Clone)]
@@ -60,13 +60,13 @@ impl HittableList {
 }
 
 impl Hittable for HittableList {
-    fn hit(&self, ray: Ray3, t_min: f64, t_max: f64, record: &mut HitRecord) -> bool {
+    fn hit(&self, ray: Ray3, interval: Interval, record: &mut HitRecord) -> bool {
         let mut temp_record = HitRecord::new();
         let mut hit_anything: bool = false;
-        let mut closest_so_far: f64 = t_max;
+        let mut closest_so_far: f64 = interval.max;
 
         for object in self.objects.iter() {
-            if object.hit(ray, t_min, closest_so_far, &mut temp_record) {
+            if object.hit(ray, Interval::new(interval.min, closest_so_far), &mut temp_record) {
                 hit_anything = true;
                 closest_so_far = temp_record.t;
                 *record = temp_record;

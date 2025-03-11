@@ -1,5 +1,7 @@
 use std::ops;
 
+use crate::vector::Vector3;
+
 #[derive(Debug, Copy, Clone)]
 pub struct ColorRGB {
     pub r: f64,
@@ -24,6 +26,18 @@ impl ops::Add for ColorRGB {
             r: (self.r + other.r).clamp(0.0, 1.0),
             g: (self.g + other.g).clamp(0.0, 1.0),
             b: (self.b + other.b).clamp(0.0, 1.0),
+        }
+    }
+}
+
+impl ops::Add<ColorRGB> for Vector3 {
+    type Output = ColorRGB;
+
+    fn add(self, other: ColorRGB) -> ColorRGB {
+        ColorRGB {
+            r: (self.x + other.r).clamp(0.0, 1.0),
+            g: (self.y + other.g).clamp(0.0, 1.0),
+            b: (self.z + other.b).clamp(0.0, 1.0),
         }
     }
 }
