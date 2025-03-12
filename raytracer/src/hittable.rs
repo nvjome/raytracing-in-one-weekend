@@ -28,7 +28,7 @@ impl HitRecord {
         self.front_face = ray.direction.dot(outward_normal) < 0.0;
         self.normal = match self.front_face {
             true => outward_normal,
-            false => -1.0 * outward_normal,
+            false => -outward_normal,
         }
     }
 }
