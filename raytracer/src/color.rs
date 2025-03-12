@@ -69,9 +69,9 @@ pub fn ppm_preamble(x: i32, y: i32) {
 }
 
 pub fn ppm_write_pixel(color: ColorRGB) {
-    let r = (color.r * 255.99) as u8;
-    let g = (color.g * 255.99) as u8;
-    let b = (color.b * 255.99) as u8;
+    let r = (color.r * 256.0) as u8;
+    let g = (color.g * 256.0) as u8;
+    let b = (color.b * 256.0) as u8;
 
     println!("{} {} {}", r, g, b);
 }

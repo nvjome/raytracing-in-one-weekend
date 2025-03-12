@@ -1,5 +1,13 @@
 use std::f64::INFINITY;
-use crate::{color::{ppm_preamble, ppm_write_pixel, ColorRGB}, hittable::{HitRecord, Hittable}, interval::Interval, point::Point3, ray::Ray3, vector::Vector3};
+use rand::{rngs::ThreadRng, Rng};
+use crate::{
+    color::{ppm_preamble, ppm_write_pixel, ColorRGB},
+    hittable::{HitRecord, Hittable},
+    interval::Interval,
+    point::Point3,
+    ray::Ray3,
+    vector::Vector3
+};
 
 #[derive(Default)]
 pub struct Camera {
@@ -10,13 +18,17 @@ pub struct Camera {
     pixel_origin: Point3,
     pixel_delta_u: Vector3,
     pixel_delta_v: Vector3,
+    pub samples_per_pixel: i32,
+    pixel_sample_scale: f64,
+    rng: ThreadRng,
 }
 
 impl Camera {
-    pub fn new(image_width: i32, aspect_ratio: f64) -> Camera {
+    pub fn new(image_width: i32, aspect_ratio: f64, samples_per_pixel: i32) -> Camera {
         Camera {
             image_width,
             aspect_ratio,
+            samples_per_pixel,
             ..Default::default()
         }
     }
@@ -29,10 +41,22 @@ impl Camera {
 
         for j in 0..self.image_height {
             eprint!("\rScanlines remaining: {}   ", self.image_height - j);
+            
             for i in 0..self.image_width {
-                let pixel_center = self.pixel_origin + (i as f64 * self.pixel_delta_u) + (j as f64 * self.pixel_delta_v);
-                let ray = Ray3::new(self.position, pixel_center - self.position);
-                ppm_write_pixel(self.ray_color(ray, &world));
+                let (mut r, mut g, mut b) = (0.0, 0.0, 0.0);
+
+                for _ in 0..self.samples_per_pixel {
+                    let ray = self.get_ray(i, j);
+                    let temp_color = self.ray_color(ray, &world);
+                    r += temp_color.r;
+                    g += temp_color.g;
+                    b += temp_color.b;
+                }
+                ppm_write_pixel(ColorRGB::new(
+                    r / self.samples_per_pixel as f64,
+                    g / self.samples_per_pixel as f64,
+                    b / self.samples_per_pixel as f64
+                ));
             }
         }
 
@@ -42,6 +66,7 @@ impl Camera {
     fn initialize(&mut self) {
         // Image
         self.image_height = (((self.image_width as f64) / self.aspect_ratio) as i32).max(1);
+        self.pixel_sample_scale = 1.0 / self.samples_per_pixel as f64;
 
         // Viewport
         let viewport_height = 2.0;
@@ -71,5 +96,23 @@ impl Camera {
         let unit_dir = ray.direction.unit();
         let a = 0.5 * (unit_dir.y + 1.0);
         return (1.0 - a) * ColorRGB::new(1.0, 1.0, 1.0) + a * ColorRGB::new(0.5, 0.7, 1.0);
+    }
+
+    fn get_ray(&mut self, i: i32, j: i32) -> Ray3 {
+        let offset = self.sample_square();
+        let pixel_sample = self.pixel_origin
+            + ((i as f64 + offset.x) * self.pixel_delta_u)
+            + ((j as f64 + offset.y) * self.pixel_delta_v);
+        
+        return Ray3::new(self.position, pixel_sample - self.position);
+    }
+
+    fn sample_square(&mut self) -> Vector3 {
+        // rng.random() returns [0.0, 1.0] for f64
+        let x: f64 = self.rng.random();
+        let y: f64 = self.rng.random();
+        let z: f64 = self.rng.random();
+        // Final result should be within [-0.5, 0.5] in all dimensions
+        return Vector3::new(x - 0.5, y - 0.5, z - 0.5);
     }
 }
