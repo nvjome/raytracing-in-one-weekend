@@ -1,15 +1,33 @@
 use std::ops;
+use rand::{rngs::ThreadRng, Rng};
 
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct Vector3 {
     pub x: f64,
     pub y: f64,
-    pub z: f64
+    pub z: f64,
 }
 
 impl Vector3 {
     pub fn new(x: f64, y: f64, z: f64) -> Vector3 {
         Vector3 {x, y, z}
+    }
+
+    // Generate a random Vector3. Requires a ThreadRng reference
+    pub fn gen_random(rng: &mut ThreadRng) -> Vector3 {
+        Vector3 {
+            x: rng.random(),
+            y: rng.random(),
+            z: rng.random(),
+        }
+    }
+
+    pub fn gen_bounded_random(min: f64, max: f64, rng: &mut ThreadRng) -> Vector3 {
+        Vector3 {
+            x: rng.random_range(min..=max),
+            y: rng.random_range(min..=max),
+            z: rng.random_range(min..=max),
+        }
     }
 
     pub fn length(&self) -> f64 {
