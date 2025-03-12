@@ -13,23 +13,6 @@ impl Vector3 {
         Vector3 {x, y, z}
     }
 
-    // Generate a random Vector3. Requires a ThreadRng reference
-    pub fn gen_random(rng: &mut ThreadRng) -> Vector3 {
-        Vector3 {
-            x: rng.random(),
-            y: rng.random(),
-            z: rng.random(),
-        }
-    }
-
-    pub fn gen_bounded_random(min: f64, max: f64, rng: &mut ThreadRng) -> Vector3 {
-        Vector3 {
-            x: rng.random_range(min..=max),
-            y: rng.random_range(min..=max),
-            z: rng.random_range(min..=max),
-        }
-    }
-
     pub fn length(&self) -> f64 {
         self.length_squared().sqrt()
     }
@@ -55,10 +38,12 @@ impl Vector3 {
     }
 }
 
+// Overload operator functions
+
 impl ops::Add for Vector3 {
     type Output = Vector3;
 
-    fn add(self, other: Vector3) -> Vector3 {
+    fn add(self, other: Vector3) -> Self::Output {
         Vector3 {
             x: self.x + other.x,
             y: self.y + other.y,
@@ -70,7 +55,7 @@ impl ops::Add for Vector3 {
 impl ops::Sub for Vector3 {
     type Output = Vector3;
 
-    fn sub(self, other: Vector3) -> Vector3 {
+    fn sub(self, other: Vector3) -> Self::Output {
         Vector3 {
             x: self.x - other.x,
             y: self.y - other.y,
@@ -79,10 +64,22 @@ impl ops::Sub for Vector3 {
     }
 }
 
+impl ops::Neg for Vector3 {
+    type Output = Vector3;
+
+    fn neg(self) -> Self::Output {
+        Vector3 {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+        }
+    }
+}
+
 impl ops::Mul<f64> for Vector3 {
     type Output = Vector3;
 
-    fn mul(self, other: f64) -> Vector3 {
+    fn mul(self, other: f64) -> Self::Output {
         Vector3 {
             x: self.x * other,
             y: self.y * other,
@@ -94,7 +91,7 @@ impl ops::Mul<f64> for Vector3 {
 impl ops::Mul<Vector3> for f64 {
     type Output = Vector3;
 
-    fn mul(self, other: Vector3) -> Vector3 {
+    fn mul(self, other: Vector3) -> Self::Output {
         Vector3::mul(other, self)
     }
 }
@@ -102,12 +99,50 @@ impl ops::Mul<Vector3> for f64 {
 impl ops::Div<f64> for Vector3 {
     type Output = Vector3;
 
-    fn div(self, rhs: f64) -> Vector3 {
+    fn div(self, rhs: f64) -> Self::Output {
         Vector3 {
             x: self.x / rhs,
             y: self.y / rhs,
             z: self.z / rhs,
         }
+    }
+}
+
+// Some required generator functions, which don't need to be within the Vector3 struct.
+// These require the calling code to pass a ThreadRng reference, which is cleaner than
+// giving all Vector3s a ThreadRng instance. Calling code can reuse one ThreadRng.
+pub fn random(rng: &mut ThreadRng) -> Vector3 {
+    Vector3 {
+        x: rng.random(),
+        y: rng.random(),
+        z: rng.random(),
+    }
+}
+
+pub fn random_bounded(min: f64, max: f64, rng: &mut ThreadRng) -> Vector3 {
+    Vector3 {
+        x: rng.random_range(min..=max),
+        y: rng.random_range(min..=max),
+        z: rng.random_range(min..=max),
+    }
+}
+
+pub fn random_unit(rng: &mut ThreadRng) -> Vector3 {
+    loop {
+        let p = random_bounded(-1.0, 1.0, rng);
+        let lensq = p.length_squared();
+        if 1e-160 < lensq && lensq <= 1.0 {
+            break p / lensq.sqrt();
+        }
+    }
+}
+
+pub fn random_unit_in_hemisphere(rng: &mut ThreadRng, normal: Vector3) -> Vector3 {
+    let unit = random_unit(rng);
+    if unit.dot(normal) > 0.0 {
+        return unit;
+    } else {
+        return -unit;
     }
 }
 
