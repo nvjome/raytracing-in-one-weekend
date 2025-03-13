@@ -6,7 +6,7 @@ use crate::{
     interval::Interval,
     point::Point3,
     ray::Ray3,
-    vector::Vector3
+    vector::{self, Vector3}
 };
 
 #[derive(Default)]
@@ -20,15 +20,17 @@ pub struct Camera {
     pixel_delta_v: Vector3,
     pub samples_per_pixel: i32,
     pixel_sample_scale: f64,
+    pub max_depth: i32,
     rng: ThreadRng,
 }
 
 impl Camera {
-    pub fn new(image_width: i32, aspect_ratio: f64, samples_per_pixel: i32) -> Camera {
+    pub fn new(image_width: i32, aspect_ratio: f64, samples_per_pixel: i32, max_depth: i32) -> Camera {
         Camera {
             image_width,
             aspect_ratio,
             samples_per_pixel,
+            max_depth,
             ..Default::default()
         }
     }
@@ -47,7 +49,7 @@ impl Camera {
 
                 for _ in 0..self.samples_per_pixel {
                     let ray = self.get_ray(i, j);
-                    let temp_color = self.ray_color(ray, &world);
+                    let temp_color = self.ray_color(ray, self.max_depth, &world);
                     r += temp_color.r;
                     g += temp_color.g;
                     b += temp_color.b;
@@ -86,11 +88,13 @@ impl Camera {
         self.pixel_origin = viewport_origin + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
     }
 
-    fn ray_color(&self, ray: Ray3, world: &impl Hittable) -> ColorRGB {
+    fn ray_color(&mut self, ray: Ray3, depth: i32, world: &impl Hittable) -> ColorRGB {
         let mut record = HitRecord::new();
     
         if world.hit(ray, Interval::new(0.0, INFINITY), &mut record) {
-            return 0.5 * record.normal + ColorRGB::new(0.5, 0.5, 0.5);
+            let direction = vector::random_unit_on_hemisphere(&mut self.rng, record.normal);
+            
+            return 0.5 * self.ray_color(Ray3::new(record.p, direction), depth - 1, world);
         }
     
         let unit_dir = ray.direction.unit();

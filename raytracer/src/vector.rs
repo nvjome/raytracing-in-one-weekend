@@ -137,7 +137,7 @@ pub fn random_unit(rng: &mut ThreadRng) -> Vector3 {
     }
 }
 
-pub fn random_unit_in_hemisphere(rng: &mut ThreadRng, normal: Vector3) -> Vector3 {
+pub fn random_unit_on_hemisphere(rng: &mut ThreadRng, normal: Vector3) -> Vector3 {
     let unit = random_unit(rng);
     if unit.dot(normal) > 0.0 {
         return unit;
