@@ -1,26 +1,26 @@
-use std::f64::INFINITY;
-use rand::{rngs::ThreadRng, Rng};
+use std::{self, fs, io};
+use glam::DVec3;
+use indicatif::ProgressIterator;
+use itertools::{self, Itertools};
+use rand::Rng;
 use crate::{
-    color::{ppm_preamble, ppm_write_pixel, ColorRGB},
     hittable::{HitRecord, Hittable},
-    point::Point3,
     ray::Ray3,
-    vector::{self, Vector3}
+    vector
 };
 
 #[derive(Default)]
 pub struct Camera {
-    position: Point3,
+    position: DVec3,
     pub image_width: i32,
     image_height: i32,
     pub aspect_ratio: f64,
-    pixel_origin: Point3,
-    pixel_delta_u: Vector3,
-    pixel_delta_v: Vector3,
+    pixel_origin: DVec3,
+    pixel_delta_u: DVec3,
+    pixel_delta_v: DVec3,
     pub samples_per_pixel: i32,
     pixel_sample_scale: f64,
     pub max_depth: i32,
-    rng: ThreadRng,
 }
 
 impl Camera {
@@ -34,34 +34,38 @@ impl Camera {
         }
     }
 
-    pub fn render(&mut self, world: impl Hittable) {
+    pub fn render(&mut self, world: impl Hittable, output_file: &str) -> io::Result<()> {
         self.initialize();
 
-        // PBM preamble
-        ppm_preamble(self.image_width, self.image_height);
+        // Generate iterator for all pixels, with progress bar
+        let pixels = (0..self.image_height)
+            .cartesian_product(0..self.image_width)
+            .progress_count(self.image_height as u64 * self.image_width as u64)
+            .map(|(y, x)| {
+                // Given a particular (x, y) pixel, calculate the pixel's color
+                let scale_factor = (self.samples_per_pixel as f64).recip();
+                let sampled_pixel_color = (0..self.samples_per_pixel)
+                    .into_iter()
+                    .map(|_| {
+                        let ray = self.get_ray(x, y);
+                        ray_color(ray, self.max_depth, &world) * 255.0 * scale_factor
+                    })
+                    .sum::<DVec3>();
 
-        for j in 0..self.image_height {
-            eprint!("\rScanlines remaining: {}   ", self.image_height - j);
-            
-            for i in 0..self.image_width {
-                let (mut r, mut g, mut b) = (0.0, 0.0, 0.0);
+                // Format for PPM file
+                format!(
+                    "{} {} {}",
+                    sampled_pixel_color.x as u32,
+                    sampled_pixel_color.y as u32,
+                    sampled_pixel_color.z as u32
+                )
+            })
+            .join("\n");
 
-                for _ in 0..self.samples_per_pixel {
-                    let ray = self.get_ray(i, j);
-                    let temp_color = self.ray_color(ray, self.max_depth, &world);
-                    r += temp_color.r;
-                    g += temp_color.g;
-                    b += temp_color.b;
-                }
-                ppm_write_pixel(ColorRGB::new(
-                    r / self.samples_per_pixel as f64,
-                    g / self.samples_per_pixel as f64,
-                    b / self.samples_per_pixel as f64
-                ));
-            }
-        }
+        // Write out PPM preamble and pixel color values
+        fs::write(output_file, format!("P3\n{} {}\n255\n{}", self.image_width, self.image_height, pixels))?;
 
-        eprintln!("\rDone                      ");
+        Ok(())
     }
 
     fn initialize(&mut self) {
@@ -75,47 +79,55 @@ impl Camera {
 
         // Camera geometry
         let focal_length = 1.0;
-        self.position = Point3::new(0.0, 0.0, 0.0);
+        self.position = DVec3::new(0.0, 0.0, 0.0);
 
-        let viewport_u = Vector3::new(viewport_width, 0.0, 0.0);
-        let viewport_v = Vector3::new(0.0, -viewport_height, 0.0);
+        let viewport_u = DVec3::new(viewport_width, 0.0, 0.0);
+        let viewport_v = DVec3::new(0.0, -viewport_height, 0.0);
         
         self.pixel_delta_u = viewport_u / self.image_width as f64;
         self.pixel_delta_v = viewport_v / self.image_height as f64;
 
-        let viewport_origin = self.position - Vector3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+        let viewport_origin = self.position - DVec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
         self.pixel_origin = viewport_origin + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
     }
 
-    fn ray_color(&mut self, ray: Ray3, depth: i32, world: &impl Hittable) -> ColorRGB {
-        let mut record = HitRecord::new();
-    
-        if world.hit(ray, 0.001..INFINITY, &mut record) {
-            let direction = vector::random_unit_on_hemisphere(&mut self.rng, record.normal);
-            
-            return 0.5 * self.ray_color(Ray3::new(record.p, direction), depth - 1, world);
-        }
-    
-        let unit_dir = ray.direction.unit();
-        let a = 0.5 * (unit_dir.y + 1.0);
-        return (1.0 - a) * ColorRGB::new(1.0, 1.0, 1.0) + a * ColorRGB::new(0.5, 0.7, 1.0);
-    }
-
-    fn get_ray(&mut self, i: i32, j: i32) -> Ray3 {
-        let offset = self.sample_square();
+    fn get_ray(&self, i: i32, j: i32) -> Ray3 {
+        
+        let offset = sample_square();
         let pixel_sample = self.pixel_origin
             + ((i as f64 + offset.x) * self.pixel_delta_u)
             + ((j as f64 + offset.y) * self.pixel_delta_v);
         
         return Ray3::new(self.position, pixel_sample - self.position);
     }
+}
 
-    fn sample_square(&mut self) -> Vector3 {
-        // rng.random() returns [0.0, 1.0] for f64
-        let x: f64 = self.rng.random();
-        let y: f64 = self.rng.random();
-        let z: f64 = self.rng.random();
-        // Final result should be within [-0.5, 0.5] in all dimensions
-        return Vector3::new(x - 0.5, y - 0.5, z - 0.5);
+fn ray_color(ray: Ray3, depth: i32, world: &impl Hittable) -> DVec3 {
+    if depth <= 0 {
+        return DVec3::new(0.0, 0.0, 0.0);
     }
+
+    let mut record = HitRecord::new();
+
+    if world.hit(ray, 0.001..f64::INFINITY, &mut record) {
+        // Get normal vector from hit location
+        let direction = vector::random_unit_on_hemisphere(&record.normal);
+        // Get color of next ray using recursion (for now)
+        return 0.5 * ray_color(Ray3::new(record.p, direction), depth - 1, world);
+        // return 0.5 * DVec3::new(record.normal.x + 1.0, record.normal.y + 1.0, record.normal.z + 1.0)
+    }
+
+    let unit_dir = ray.direction.normalize();
+    let a = 0.5 * (unit_dir.y + 1.0);
+    return (1.0 - a) * DVec3::new(1.0, 1.0, 1.0) + a * DVec3::new(0.5, 0.7, 1.0);
+}
+
+fn sample_square() -> DVec3 {
+    let mut rng = rand::rng();
+    // rng.random() returns [0.0, 1.0] for f64
+    let x: f64 = rng.random();
+    let y: f64 = rng.random();
+    let z: f64 = rng.random();
+    // Final result should be within [-0.5, 0.5] in all dimensions
+    return DVec3::new(x - 0.5, y - 0.5, z - 0.5);
 }

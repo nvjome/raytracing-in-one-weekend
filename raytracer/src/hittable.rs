@@ -1,6 +1,6 @@
 use std::ops::Range;
-
-use crate::{point::Point3, ray::Ray3, vector::Vector3};
+use glam::DVec3;
+use crate::ray::Ray3;
 
 pub trait Hittable {
     #[allow(unused_variables)]
@@ -9,8 +9,8 @@ pub trait Hittable {
 
 #[derive(Copy, Clone)]
 pub struct HitRecord {
-    pub p: Point3,
-    pub normal: Vector3,
+    pub p: DVec3,
+    pub normal: DVec3,
     pub t: f64,
     pub front_face: bool,
 }
@@ -18,13 +18,13 @@ pub struct HitRecord {
 impl HitRecord {
     pub fn new() -> HitRecord {
         HitRecord {
-            p: Point3::new(0.0, 0.0, 0.0),
-            normal: Vector3::new(0.0, 0.0, 0.0),
+            p: DVec3::new(0.0, 0.0, 0.0),
+            normal: DVec3::new(0.0, 0.0, 0.0),
             t: 0.0,
             front_face: false,
         }
     }
-    pub fn set_face_normal(&mut self, ray: Ray3, outward_normal: Vector3) {
+    pub fn set_face_normal(&mut self, ray: Ray3, outward_normal: DVec3) {
         // Dot product is negative is ray comes from outside (points agains normal),
         // and positive if ray comes from inside (points with normal)
         self.front_face = ray.direction.dot(outward_normal) < 0.0;

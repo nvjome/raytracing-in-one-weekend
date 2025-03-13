@@ -1,15 +1,15 @@
 use std::ops::Range;
-
-use crate::{hittable::{HitRecord, Hittable}, point::Point3, ray::Ray3};
+use glam::DVec3;
+use crate::{hittable::{HitRecord, Hittable}, ray::Ray3};
 
 #[derive(Debug, Default)]
 pub struct Sphere {
-    center: Point3,
+    center: DVec3,
     radius: f64,
 }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: f64) -> Sphere {
+    pub fn new(center: DVec3, radius: f64) -> Sphere {
         Sphere {
             center,
             radius: radius.max(0.0),
