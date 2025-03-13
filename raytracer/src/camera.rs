@@ -6,7 +6,7 @@ use rand::Rng;
 use crate::{
     hittable::{HitRecord, Hittable},
     ray::Ray3,
-    vector
+    vector_utils
 };
 
 #[derive(Default)]
@@ -111,7 +111,7 @@ fn ray_color(ray: Ray3, depth: i32, world: &impl Hittable) -> DVec3 {
 
     if world.hit(ray, 0.001..f64::INFINITY, &mut record) {
         // Get normal vector from hit location
-        let direction = vector::random_unit_on_hemisphere(&record.normal);
+        let direction = vector_utils::random_unit_on_hemisphere(&record.normal);
         // Get color of next ray using recursion (for now)
         return 0.5 * ray_color(Ray3::new(record.p, direction), depth - 1, world);
         // return 0.5 * DVec3::new(record.normal.x + 1.0, record.normal.y + 1.0, record.normal.z + 1.0)
