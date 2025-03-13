@@ -4,9 +4,8 @@ use indicatif::ProgressIterator;
 use itertools::{self, Itertools};
 use rand::Rng;
 use crate::{
-    hittable::{HitRecord, Hittable},
+    hittable::Hittable,
     ray::Ray3,
-    vector_utils
 };
 
 #[derive(Default)]
@@ -42,22 +41,31 @@ impl Camera {
             .cartesian_product(0..self.image_width)
             .progress_count(self.image_height as u64 * self.image_width as u64)
             .map(|(y, x)| {
-                // Given a particular (x, y) pixel, calculate the pixel's color
-                let scale_factor = (self.samples_per_pixel as f64).recip();
+                // Will need to scale the final color by the reciprocol of the number of samples
+                // let scale_factor = (self.samples_per_pixel as f64).recip();
+                // Given a particular (x, y) pixel, calculate the pixel's color using multisampling
                 let sampled_pixel_color = (0..self.samples_per_pixel)
                     .into_iter()
                     .map(|_| {
-                        let ray = self.get_ray(x, y);
-                        ray_color(ray, self.max_depth, &world) * 255.0 * scale_factor
+                        // Get a ray, then get the color of that ray
+                        self.get_ray(x, y).color(self.max_depth, &world)
                     })
-                    .sum::<DVec3>();
+                    // Sum all samples and scale
+                    .sum::<DVec3>() / self.samples_per_pixel as f64;
 
-                // Format for PPM file
+                // Clamp and scal to 0 - 255
+                let color = DVec3 {
+                    x: linear_to_gamma(sampled_pixel_color.x),
+                    y: linear_to_gamma(sampled_pixel_color.y),
+                    z: linear_to_gamma(sampled_pixel_color.z),
+                }.clamp(DVec3::splat(0.0), DVec3::splat(0.999)) * 256.0;
+
+                // Format the pixel line for PPM file (integers)
                 format!(
                     "{} {} {}",
-                    sampled_pixel_color.x as u32,
-                    sampled_pixel_color.y as u32,
-                    sampled_pixel_color.z as u32
+                    color.x as u32,
+                    color.y as u32,
+                    color.z as u32
                 )
             })
             .join("\n");
@@ -102,26 +110,6 @@ impl Camera {
     }
 }
 
-fn ray_color(ray: Ray3, depth: i32, world: &impl Hittable) -> DVec3 {
-    if depth <= 0 {
-        return DVec3::new(0.0, 0.0, 0.0);
-    }
-
-    let mut record = HitRecord::new();
-
-    if world.hit(ray, 0.001..f64::INFINITY, &mut record) {
-        // Get normal vector from hit location
-        let direction = vector_utils::random_unit_on_hemisphere(&record.normal);
-        // Get color of next ray using recursion (for now)
-        return 0.5 * ray_color(Ray3::new(record.p, direction), depth - 1, world);
-        // return 0.5 * DVec3::new(record.normal.x + 1.0, record.normal.y + 1.0, record.normal.z + 1.0)
-    }
-
-    let unit_dir = ray.direction.normalize();
-    let a = 0.5 * (unit_dir.y + 1.0);
-    return (1.0 - a) * DVec3::new(1.0, 1.0, 1.0) + a * DVec3::new(0.5, 0.7, 1.0);
-}
-
 fn sample_square() -> DVec3 {
     let mut rng = rand::rng();
     // rng.random() returns [0.0, 1.0] for f64
@@ -130,4 +118,8 @@ fn sample_square() -> DVec3 {
     let z: f64 = rng.random();
     // Final result should be within [-0.5, 0.5] in all dimensions
     return DVec3::new(x - 0.5, y - 0.5, z - 0.5);
+}
+
+fn linear_to_gamma(scalar: f64) -> f64 {
+    return scalar.sqrt();
 }

@@ -9,7 +9,7 @@ pub trait Hittable {
 
 #[derive(Copy, Clone)]
 pub struct HitRecord {
-    pub p: DVec3,
+    pub point: DVec3,
     pub normal: DVec3,
     pub t: f64,
     pub front_face: bool,
@@ -18,7 +18,7 @@ pub struct HitRecord {
 impl HitRecord {
     pub fn new() -> HitRecord {
         HitRecord {
-            p: DVec3::new(0.0, 0.0, 0.0),
+            point: DVec3::new(0.0, 0.0, 0.0),
             normal: DVec3::new(0.0, 0.0, 0.0),
             t: 0.0,
             front_face: false,

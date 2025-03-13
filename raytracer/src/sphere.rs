@@ -2,7 +2,7 @@ use std::ops::Range;
 use glam::DVec3;
 use crate::{hittable::{HitRecord, Hittable}, ray::Ray3};
 
-#[derive(Debug, Default)]
+// #[derive(Debug, Default)]
 pub struct Sphere {
     center: DVec3,
     radius: f64,
@@ -42,9 +42,9 @@ impl Hittable for Sphere {
         }
 
         record.t = root;
-        record.p = ray.at(record.t);
+        record.point = ray.at(record.t);
         // record.normal = (record.p - self.center) / self.radius;
-        let outward_normal = (record.p - self.center) / self.radius;
+        let outward_normal = (record.point - self.center) / self.radius;
         record.set_face_normal(ray, outward_normal);
 
         return true;
