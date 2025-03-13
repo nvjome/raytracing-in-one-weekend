@@ -4,10 +4,10 @@ use crate::ray::Ray3;
 
 pub trait Hittable {
     #[allow(unused_variables)]
-    fn hit(&self, ray: Ray3, interval: Range<f64>, record: &mut HitRecord) -> bool { false }
+    fn hit(&self, ray: Ray3, interval: Range<f64>) -> Option<HitRecord> { None }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Default, Copy, Clone)]
 pub struct HitRecord {
     pub point: DVec3,
     pub normal: DVec3,
@@ -24,6 +24,7 @@ impl HitRecord {
             front_face: false,
         }
     }
+
     pub fn set_face_normal(&mut self, ray: Ray3, outward_normal: DVec3) {
         // Dot product is negative is ray comes from outside (points agains normal),
         // and positive if ray comes from inside (points with normal)
@@ -62,19 +63,25 @@ impl HittableList {
 }
 
 impl Hittable for HittableList {
-    fn hit(&self, ray: Ray3, interval: Range<f64>, record: &mut HitRecord) -> bool {
-        let mut temp_record = HitRecord::new();
-        let mut hit_anything: bool = false;
-        let mut closest_so_far: f64 = interval.end;
+    fn hit(&self, ray: Ray3, interval: Range<f64>) -> Option<HitRecord> {
+        let mut closest_record: Option<HitRecord> = None;
+        let mut closest_t_so_far = interval.end;
 
+        // Loop through all hittable objects in Self::objects
         for object in self.objects.iter() {
-            if object.hit(ray, interval.start..closest_so_far, &mut temp_record) {
-                hit_anything = true;
-                closest_so_far = temp_record.t;
-                *record = temp_record;
+            // Check for a hit between the start and the last closest hit
+            match object.hit(ray, interval.start..closest_t_so_far) {
+                Some(record) => {
+                    // Save record as the next closest hit
+                    closest_record = Some(record);
+                    closest_t_so_far = record.t;
+                },
+                None => {
+                    // No hit, so continue
+                }
             }
-        }
-        
-        return hit_anything;
+        };
+
+        return closest_record;
     }
 }

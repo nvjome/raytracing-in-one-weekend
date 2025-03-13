@@ -13,7 +13,7 @@ fn main() -> io::Result<()> {
     let samples_per_pixel = 100;
     let max_depth = 10;
 
-    let output = "output/gamma2.ppm";
+    let output = "output/gamma3.ppm";
 
     // World
     let mut world = HittableList::new();

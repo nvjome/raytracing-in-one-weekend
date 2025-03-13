@@ -1,5 +1,5 @@
 use glam::DVec3;
-use crate::{hittable::{Hittable, HitRecord}, vector_utils};
+use crate::{hittable::Hittable, vector_utils};
 
 #[derive(Copy, Clone)]
 pub struct Ray3 {
@@ -17,22 +17,22 @@ impl Ray3 {
     }
 
     pub fn color(self, depth: i32, world: &impl Hittable) -> DVec3 {
-    if depth <= 0 {
-        return DVec3::new(0.0, 0.0, 0.0);
+        if depth <= 0 {
+            return DVec3::new(0.0, 0.0, 0.0);
+        }
+
+        match world.hit(self, 0.001..f64::INFINITY) {
+            Some(record) => { // Hit
+                // Get random reflection vector from Lambertian distribution (normal vector + random unit vector)
+                let scattered_ray = Self::new(record.point, record.normal + vector_utils::random_unit_vector());
+                // Get color of next ray using recursion
+                return 0.4 * Self::color(scattered_ray, depth - 1, world);
+            },
+            None => ()
+        }
+
+        let unit_dir = self.direction.normalize();
+        let a = 0.5 * (unit_dir.y + 1.0);
+        return (1.0 - a) * DVec3::new(1.0, 1.0, 1.0) + a * DVec3::new(0.5, 0.7, 1.0);
     }
-
-    let mut record = HitRecord::new();
-
-    if world.hit(self, 0.001..f64::INFINITY, &mut record) {
-        // Get random reflection vector from Lambertian distribution (normal vector + random unit vector)
-        let scattered_ray = Self::new(record.point, record.normal + vector_utils::random_unit_vector());
-        // Get color of next ray using recursion
-        return 0.5 * Self::color(scattered_ray, depth - 1, world);
-        // return 0.5 * DVec3::new(record.normal.x + 1.0, record.normal.y + 1.0, record.normal.z + 1.0)
-    }
-
-    let unit_dir = self.direction.normalize();
-    let a = 0.5 * (unit_dir.y + 1.0);
-    return (1.0 - a) * DVec3::new(1.0, 1.0, 1.0) + a * DVec3::new(0.5, 0.7, 1.0);
-}
 }

@@ -42,22 +42,22 @@ impl Camera {
             .progress_count(self.image_height as u64 * self.image_width as u64)
             .map(|(y, x)| {
                 // Will need to scale the final color by the reciprocol of the number of samples
-                // let scale_factor = (self.samples_per_pixel as f64).recip();
+                let scale_factor = (self.samples_per_pixel as f64).recip();
                 // Given a particular (x, y) pixel, calculate the pixel's color using multisampling
-                let sampled_pixel_color = (0..self.samples_per_pixel)
+                let multisampled_pixel_color = (0..self.samples_per_pixel)
                     .into_iter()
                     .map(|_| {
                         // Get a ray, then get the color of that ray
                         self.get_ray(x, y).color(self.max_depth, &world)
                     })
                     // Sum all samples and scale
-                    .sum::<DVec3>() / self.samples_per_pixel as f64;
+                    .sum::<DVec3>() * scale_factor;
 
-                // Clamp and scal to 0 - 255
+                // Clamp and scale to 0 - 255
                 let color = DVec3 {
-                    x: linear_to_gamma(sampled_pixel_color.x),
-                    y: linear_to_gamma(sampled_pixel_color.y),
-                    z: linear_to_gamma(sampled_pixel_color.z),
+                    x: linear_to_gamma(multisampled_pixel_color.x),
+                    y: linear_to_gamma(multisampled_pixel_color.y),
+                    z: linear_to_gamma(multisampled_pixel_color.z),
                 }.clamp(DVec3::splat(0.0), DVec3::splat(0.999)) * 256.0;
 
                 // Format the pixel line for PPM file (integers)
@@ -121,5 +121,9 @@ fn sample_square() -> DVec3 {
 }
 
 fn linear_to_gamma(scalar: f64) -> f64 {
-    return scalar.sqrt();
+    if scalar > 0.0 {
+        return scalar.sqrt();
+    } else {
+        return 0.0;
+    }
 }
