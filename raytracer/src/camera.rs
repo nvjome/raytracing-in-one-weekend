@@ -3,7 +3,6 @@ use rand::{rngs::ThreadRng, Rng};
 use crate::{
     color::{ppm_preamble, ppm_write_pixel, ColorRGB},
     hittable::{HitRecord, Hittable},
-    interval::Interval,
     point::Point3,
     ray::Ray3,
     vector::{self, Vector3}
@@ -91,7 +90,7 @@ impl Camera {
     fn ray_color(&mut self, ray: Ray3, depth: i32, world: &impl Hittable) -> ColorRGB {
         let mut record = HitRecord::new();
     
-        if world.hit(ray, Interval::new(0.0, INFINITY), &mut record) {
+        if world.hit(ray, 0.001..INFINITY, &mut record) {
             let direction = vector::random_unit_on_hemisphere(&mut self.rng, record.normal);
             
             return 0.5 * self.ray_color(Ray3::new(record.p, direction), depth - 1, world);
