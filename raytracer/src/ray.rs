@@ -1,5 +1,5 @@
 use glam::DVec3;
-use crate::{hittable::Hittable, vector_utils};
+use crate::hittable::Hittable;
 
 #[derive(Copy, Clone)]
 pub struct Ray3 {
@@ -22,12 +22,24 @@ impl Ray3 {
         }
 
         match world.hit(self, 0.001..f64::INFINITY) {
+            // Ray hit an object
             Some(record) => { // Hit
+                match record.material.scatter(self, record) {
+                    // Ray scattered
+                    Some(scattered) => {
+                        return scattered.attenuation * Self::color(scattered.scattered, depth - 1, world);
+                    },
+                    // Ray absorbed
+                    None => {
+                        return DVec3::new(0.0, 0.0, 0.0);
+                    }
+                }
                 // Get random reflection vector from Lambertian distribution (normal vector + random unit vector)
-                let scattered_ray = Self::new(record.point, record.normal + vector_utils::random_unit_vector());
+                // let scattered_ray = Self::new(record.point, record.normal + vector_utils::random_unit_vector());
                 // Get color of next ray using recursion
-                return 0.4 * Self::color(scattered_ray, depth - 1, world);
+                // return 0.5 * Self::color(scattered_ray, depth - 1, world);
             },
+            // Ray didn't hit an object
             None => ()
         }
 

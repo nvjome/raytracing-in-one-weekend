@@ -1,38 +1,43 @@
 use std::ops::Range;
 use glam::DVec3;
-use crate::ray::Ray3;
+use crate::{material::Material, ray::Ray3};
 
 pub trait Hittable {
     #[allow(unused_variables)]
     fn hit(&self, ray: Ray3, interval: Range<f64>) -> Option<HitRecord> { None }
 }
 
-#[derive(Default, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct HitRecord {
     pub point: DVec3,
     pub normal: DVec3,
     pub t: f64,
     pub front_face: bool,
+    pub material: Material,
 }
 
 impl HitRecord {
-    pub fn new() -> HitRecord {
+    pub fn with_face_normal(point: DVec3, normal: DVec3, t: f64, material: Material, ray: Ray3, ) -> HitRecord {
+        let (front_face, normal) = HitRecord::calculate_face_normal(ray, normal);
         HitRecord {
-            point: DVec3::new(0.0, 0.0, 0.0),
-            normal: DVec3::new(0.0, 0.0, 0.0),
-            t: 0.0,
-            front_face: false,
+            point,
+            normal,
+            t,
+            front_face,
+            material,
         }
     }
 
-    pub fn set_face_normal(&mut self, ray: Ray3, outward_normal: DVec3) {
-        // Dot product is negative is ray comes from outside (points agains normal),
+    fn calculate_face_normal(ray: Ray3, outward_normal: DVec3) -> (bool, DVec3) {
+        // Dot product is negative if ray comes from outside (points agains normal),
         // and positive if ray comes from inside (points with normal)
-        self.front_face = ray.direction.dot(outward_normal) < 0.0;
-        self.normal = match self.front_face {
+        let front_face = ray.direction.dot(outward_normal) < 0.0;
+        let normal = match front_face {
             true => outward_normal,
             false => -outward_normal,
-        }
+        };
+
+        return (front_face, normal);
     }
 }
 
