@@ -1,4 +1,5 @@
 use glam::DVec3;
+use rand::Rng;
 
 use crate::{hittable::HitRecord, ray::Ray3, vector_utils};
 
@@ -11,6 +12,9 @@ pub enum Material {
         albedo: DVec3,
         fuzz: f64,
     },
+    Dielectric  {
+        refraction_index: f64,
+    }
 }
 
 pub struct Scattered {
@@ -39,7 +43,7 @@ impl Material {
 
             Material::Metal { albedo , fuzz} => {
                 let reflected_direction = 
-                    vector_utils::reflect(incident_ray.direction, record.normal)
+                    reflect(incident_ray.direction, record.normal)
                     .normalize()
                     + (fuzz * vector_utils::random_unit_vector());
                 
@@ -54,7 +58,56 @@ impl Material {
                     return None;
                 }
                 
-            }
+            },
+
+            Material::Dielectric { refraction_index } => {
+                let mut rng = rand::rng();
+
+                let attenuation = DVec3::new(1.0, 1.0, 1.0);
+                let refraction_index_corrected = match record.front_face {
+                    true => refraction_index.recip(),
+                    false => refraction_index,
+                };
+                let unit_direction = incident_ray.direction.normalize();
+
+                // Prep to check if ray can be refracted
+                let cos_theta = (-unit_direction).dot(record.normal).min(1.0);
+                let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+
+                let cannot_refract = refraction_index_corrected * sin_theta > 1.0;
+
+                let direction = match cannot_refract || (reflectance(cos_theta, refraction_index_corrected) > rng.random_range(0.0..1.0)) {
+                    // No refraction solution, so reflect
+                    true => reflect(unit_direction, record.normal),
+                    // Refract
+                    false => refract(unit_direction, record.normal, refraction_index_corrected),
+                };
+
+                return Some(Scattered {
+                    scattered: Ray3 {
+                        origin: record.point,
+                        direction,
+                    },
+                    attenuation,
+                });
+            },
         }
     }
+}
+
+pub fn reflect(vector: DVec3, normal: DVec3) -> DVec3 {
+    return vector - 2.0 * vector.dot(normal) * normal;
+}
+
+pub fn refract(vector: DVec3, normal: DVec3, refraction_ratio: f64) -> DVec3 {
+    let cos_theta = (-vector).dot(normal).min(1.0);
+    let r_perpendicular = refraction_ratio * (vector + cos_theta * normal);
+    let r_parallel = -(1.0 - r_perpendicular.length_squared()).abs().sqrt() * normal;
+    return r_perpendicular + r_parallel;
+}
+
+fn reflectance(cosine: f64, refraction_index: f64) -> f64 {
+    let mut r0 = (1.0 - refraction_index) / (1.0 + refraction_index);
+    r0 = r0*r0;
+    return r0 + (1.0 - r0)*(1.0 - cosine).powf(5.0);
 }

@@ -41,7 +41,3 @@ pub fn near_zero(vector: DVec3) -> bool {{
     let s = 1e-8;
     return vector.x < s && vector.y < s && vector.z < s;
 }}
-
-pub fn reflect(vector: DVec3, normal: DVec3) -> DVec3 {
-    return vector - 2.0 * vector.dot(normal) * normal;
-}

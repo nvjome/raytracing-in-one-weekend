@@ -14,25 +14,24 @@ fn main() -> io::Result<()> {
     let samples_per_pixel = 100;
     let max_depth = 50;
 
-    let output = "output/materials2.ppm";
+    let output = "output/materials4.ppm";
 
     // Materials
     let material_ground = Material::Lambertian {
-        albedo: Color::new(0.8, 0.8, 0.0)
+        albedo: Color::new(0.8, 0.8, 0.0),
     };
 
     let material_center = Material::Lambertian {
-        albedo: Color::new(0.1, 0.2, 0.5)
+        albedo: Color::new(0.1, 0.2, 0.5),
     };
 
-    let material_left = Material::Metal {
-        albedo: Color::new(0.8, 0.8, 0.8),
-        fuzz: 0.3,
+    let material_left = Material::Dielectric {
+        refraction_index: 1.0 / 1.33,
     };
 
     let material_right = Material::Metal {
         albedo: Color::new(0.8, 0.6, 0.2),
-        fuzz: 1.0
+        fuzz: 1.0,
     };
 
     // World
