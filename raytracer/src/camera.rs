@@ -1,4 +1,3 @@
-use std::{self, fs, io};
 use glam::DVec3;
 use indicatif::ProgressIterator;
 use itertools::{self, Itertools};
@@ -12,7 +11,7 @@ use crate::{
 pub struct Camera {
     position: DVec3,
     pub image_width: i32,
-    image_height: i32,
+    pub image_height: i32,
     pub aspect_ratio: f64,
     pixel_origin: DVec3,
     pixel_delta_u: DVec3,
@@ -33,9 +32,8 @@ impl Camera {
         }
     }
 
-    pub fn render(&mut self, world: impl Hittable, output_file: &str) -> io::Result<()> {
+    pub fn render(&mut self, world: impl Hittable) -> Vec<(u32, u32, u32)> {
         self.initialize();
-
         // Generate iterator for all pixels, with progress bar
         let pixels = (0..self.image_height)
             .cartesian_product(0..self.image_width)
@@ -60,20 +58,11 @@ impl Camera {
                     z: linear_to_gamma(multisampled_pixel_color.z),
                 }.clamp(DVec3::splat(0.0), DVec3::splat(0.999)) * 256.0;
 
-                // Format the pixel line for PPM file (integers)
-                format!(
-                    "{} {} {}",
-                    color.x as u32,
-                    color.y as u32,
-                    color.z as u32
-                )
-            })
-            .join("\n");
+                // Color tuple
+                (color.x as u32, color.y as u32, color.z as u32)
+            }).collect::<Vec<(u32, u32, u32)>>();
 
-        // Write out PPM preamble and pixel color values
-        fs::write(output_file, format!("P3\n{} {}\n255\n{}", self.image_width, self.image_height, pixels))?;
-
-        Ok(())
+        return pixels;
     }
 
     fn initialize(&mut self) {

@@ -1,5 +1,6 @@
-use std::io;
+use std::{fs, io};
 use glam::DVec3;
+use itertools::{self, Itertools};
 use raytracer::{
     camera::Camera, hittable::HittableList, material::Material, sphere::Sphere
 };
@@ -10,11 +11,11 @@ type Color = DVec3;
 fn main() -> io::Result<()> {
     // Output
     let aspect_ratio = 16.0 / 9.0;
-    let image_width = 400;
-    let samples_per_pixel = 100;
-    let max_depth = 50;
+    let image_width = 800;
+    let samples_per_pixel = 500;
+    let max_depth = 100;
 
-    let output = "output/materials4.ppm";
+    let output = "output/test2.ppm";
 
     // Materials
     let material_ground = Material::Lambertian {
@@ -45,7 +46,19 @@ fn main() -> io::Result<()> {
     // Camera
     let mut camera = Camera::new(image_width, aspect_ratio, samples_per_pixel, max_depth);
 
-    // Render... It's a simple as that
-    camera.render(world, output)?;
+    // Render image
+    let image = camera.render(world);
+
+    // PPM preamble
+    let preamble = format!("P3\n{} {}\n255\n", camera.image_width, camera.image_height);
+
+    // PPM pixel data
+    let data = image.iter().map(|(r, g, b)| {
+        format!("{} {} {}", r, g, b)
+    })
+    .join("\n");
+
+    fs::write(output, format!("{}\n{}", preamble, data))?;
+
     Ok(())
 }
