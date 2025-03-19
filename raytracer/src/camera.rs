@@ -1,8 +1,7 @@
 use std::sync::Arc;
-use pariter::IteratorExt as _;
+use rayon::prelude::*;
 use glam::DVec3;
-use indicatif::ProgressIterator;
-use itertools::{self, Itertools};
+use indicatif::{ProgressBar, ProgressStyle};
 use rand::Rng;
 use crate::{
     hittable::Hittable,
@@ -57,16 +56,19 @@ impl Camera {
     }
 
     pub fn render(self, world: Arc<dyn Hittable>) -> Vec<(u32, u32, u32)> {
-        // Generate iterator for all pixels, with progress bar
-        let pixels = (0..self.image_height)
-            .cartesian_product(0..self.image_width)
-            .progress_count(self.image_height as u64 * self.image_width as u64)
-            // .par_bridge()
-            .parallel_map(move |(y, x)| {
+        let bar = ProgressBar::new(self.image_height as u64 * self.image_width as u64);
+        bar.set_style(ProgressStyle::default_bar());
+        // Generate iterator for all pixels
+        let pixels = (0..self.image_height * self.image_width)
+            .into_par_iter()
+            .map(|index| {
+                // Extract (x, y) from iterator
+                let x = index % self.image_width;
+                let y = index / self.image_width;
+
                 let world = Arc::clone(&world);
-                // Will need to scale the final color by the reciprocol of the number of samples
                 let scale_factor = (self.samples_per_pixel as f64).recip();
-                // Calculate the pixel's color using multisampling
+                
                 let multisampled_pixel_color = (0..self.samples_per_pixel)
                     .into_iter()
                     .map(|_| {
@@ -76,12 +78,14 @@ impl Camera {
                     // Sum all samples and scale
                     .sum::<DVec3>() * scale_factor;
 
-                // Clamp and scale to 0 - 255
+                // Scale and clamp
                 let color = DVec3 {
                     x: linear_to_gamma(multisampled_pixel_color.x),
                     y: linear_to_gamma(multisampled_pixel_color.y),
                     z: linear_to_gamma(multisampled_pixel_color.z),
                 }.clamp(DVec3::splat(0.0), DVec3::splat(0.999)) * 256.0;
+
+                bar.inc(1);
 
                 // Color tuple
                 (color.x as u32, color.y as u32, color.z as u32)
@@ -91,7 +95,6 @@ impl Camera {
     }
 
     fn get_ray(&self, i: i32, j: i32) -> Ray3 {
-        
         let offset = sample_square();
         let pixel_sample = self.pixel_origin
             + ((i as f64 + offset.x) * self.pixel_delta_u)

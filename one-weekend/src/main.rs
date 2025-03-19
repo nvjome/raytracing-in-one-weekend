@@ -12,11 +12,11 @@ fn main() -> io::Result<()> {
     let now = Instant::now();
     // Output
     let aspect_ratio = 16.0 / 9.0;
-    let image_width = 800;
+    let image_width = 1920;
     let samples_per_pixel = 500;
     let max_depth = 100;
 
-    let output = "output/multithreaded2.ppm";
+    let output = "output/multithreaded4.ppm";
 
     // Materials
     let material_ground = Material::Lambertian {
@@ -53,6 +53,7 @@ fn main() -> io::Result<()> {
     let camera = Camera::new(image_width, aspect_ratio, samples_per_pixel, max_depth);
 
     // Render image
+    println!("Rendering...");
     let image = camera.render(Arc::new(world));
 
     // PPM preamble
@@ -67,6 +68,6 @@ fn main() -> io::Result<()> {
     fs::write(output, format!("{}\n{}", preamble, data))?;
 
     let elapsed = now.elapsed();
-    println!("{:.2?}", elapsed);
+    println!("Finished render in {:.2?}", elapsed);
     Ok(())
 }
