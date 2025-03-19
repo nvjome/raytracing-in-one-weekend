@@ -2,7 +2,7 @@ use std::ops::Range;
 use glam::DVec3;
 use crate::{material::Material, ray::Ray3};
 
-pub trait Hittable {
+pub trait Hittable: Send + Sync {
     #[allow(unused_variables)]
     fn hit(&self, ray: Ray3, interval: Range<f64>) -> Option<HitRecord> { None }
 }

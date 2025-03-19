@@ -16,7 +16,7 @@ impl Ray3 {
         self.origin + t * self.direction
     }
 
-    pub fn color(self, depth: i32, world: &impl Hittable) -> DVec3 {
+    pub fn color(self, depth: i32, world: &dyn Hittable) -> DVec3 {
         if depth <= 0 {
             return DVec3::new(0.0, 0.0, 0.0);
         }

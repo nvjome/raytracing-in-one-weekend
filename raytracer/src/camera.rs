@@ -1,3 +1,5 @@
+use std::sync::Arc;
+use pariter::IteratorExt as _;
 use glam::DVec3;
 use indicatif::ProgressIterator;
 use itertools::{self, Itertools};
@@ -7,7 +9,7 @@ use crate::{
     ray::Ray3,
 };
 
-#[derive(Default)]
+#[derive(Default, Copy, Clone)]
 pub struct Camera {
     position: DVec3,
     pub image_width: i32,
@@ -17,36 +19,59 @@ pub struct Camera {
     pixel_delta_u: DVec3,
     pixel_delta_v: DVec3,
     pub samples_per_pixel: i32,
-    pixel_sample_scale: f64,
     pub max_depth: i32,
 }
 
 impl Camera {
     pub fn new(image_width: i32, aspect_ratio: f64, samples_per_pixel: i32, max_depth: i32) -> Camera {
+        let image_height = (((image_width as f64) / aspect_ratio) as i32).max(1);
+
+        // Viewport
+        let viewport_height = 2.0;
+        let viewport_width = viewport_height * (image_width as f64) / (image_height as f64);
+
+        // Camera geometry
+        let focal_length = 1.0;
+        let position = DVec3::new(0.0, 0.0, 0.0);
+
+        let viewport_u = DVec3::new(viewport_width, 0.0, 0.0);
+        let viewport_v = DVec3::new(0.0, -viewport_height, 0.0);
+        
+        let pixel_delta_u = viewport_u / image_width as f64;
+        let pixel_delta_v = viewport_v / image_height as f64;
+
+        let viewport_origin = position - DVec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+        let pixel_origin = viewport_origin + 0.5 * (pixel_delta_u + pixel_delta_v);
+        
         Camera {
+            position,
             image_width,
+            image_height,
             aspect_ratio,
+            pixel_origin,
+            pixel_delta_u,
+            pixel_delta_v,
             samples_per_pixel,
             max_depth,
-            ..Default::default()
         }
     }
 
-    pub fn render(&mut self, world: impl Hittable) -> Vec<(u32, u32, u32)> {
-        self.initialize();
+    pub fn render(self, world: Arc<dyn Hittable>) -> Vec<(u32, u32, u32)> {
         // Generate iterator for all pixels, with progress bar
         let pixels = (0..self.image_height)
             .cartesian_product(0..self.image_width)
             .progress_count(self.image_height as u64 * self.image_width as u64)
-            .map(|(y, x)| {
+            // .par_bridge()
+            .parallel_map(move |(y, x)| {
+                let world = Arc::clone(&world);
                 // Will need to scale the final color by the reciprocol of the number of samples
                 let scale_factor = (self.samples_per_pixel as f64).recip();
-                // Given a particular (x, y) pixel, calculate the pixel's color using multisampling
+                // Calculate the pixel's color using multisampling
                 let multisampled_pixel_color = (0..self.samples_per_pixel)
                     .into_iter()
                     .map(|_| {
                         // Get a ray, then get the color of that ray
-                        self.get_ray(x, y).color(self.max_depth, &world)
+                        self.get_ray(x, y).color(self.max_depth, &*world)
                     })
                     // Sum all samples and scale
                     .sum::<DVec3>() * scale_factor;
@@ -63,29 +88,6 @@ impl Camera {
             }).collect::<Vec<(u32, u32, u32)>>();
 
         return pixels;
-    }
-
-    fn initialize(&mut self) {
-        // Image
-        self.image_height = (((self.image_width as f64) / self.aspect_ratio) as i32).max(1);
-        self.pixel_sample_scale = 1.0 / self.samples_per_pixel as f64;
-
-        // Viewport
-        let viewport_height = 2.0;
-        let viewport_width = viewport_height * (self.image_width as f64) / (self.image_height as f64);
-
-        // Camera geometry
-        let focal_length = 1.0;
-        self.position = DVec3::new(0.0, 0.0, 0.0);
-
-        let viewport_u = DVec3::new(viewport_width, 0.0, 0.0);
-        let viewport_v = DVec3::new(0.0, -viewport_height, 0.0);
-        
-        self.pixel_delta_u = viewport_u / self.image_width as f64;
-        self.pixel_delta_v = viewport_v / self.image_height as f64;
-
-        let viewport_origin = self.position - DVec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
-        self.pixel_origin = viewport_origin + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
     }
 
     fn get_ray(&self, i: i32, j: i32) -> Ray3 {

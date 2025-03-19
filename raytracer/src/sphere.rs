@@ -53,7 +53,7 @@ impl Hittable for Sphere {
         let outward_normal = ( point - self.center) / self.radius;
         // record.set_face_normal(ray, outward_normal);
 
-        let record = HitRecord::with_face_normal(point, outward_normal, t, self.material.clone(), ray);
+        let record = HitRecord::with_face_normal(point, outward_normal, t, self.material, ray);
 
         return Some(record);
     }
