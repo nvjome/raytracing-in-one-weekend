@@ -75,6 +75,7 @@ pub struct CameraBuilder {
     pub image_height: i32,
     pub samples_per_pixel: i32,
     pub max_depth: i32,
+    pub vertical_fov: f64,
 }
 
 impl CameraBuilder {
@@ -85,6 +86,7 @@ impl CameraBuilder {
             image_height: 400,
             samples_per_pixel: 10,
             max_depth: 10,
+            vertical_fov: 90.0,
         }
     }
 
@@ -94,13 +96,14 @@ impl CameraBuilder {
         let samples_per_pixel = self.samples_per_pixel.max(1);
         let max_depth = self.max_depth.max(1);
 
-        // Viewport
-        let viewport_height = 2.0;
-        let viewport_width = viewport_height * (image_width as f64) / (image_height as f64);
-
-        // Camera geometry
-        let focal_length = 1.0;
         let position = DVec3::new(0.0, 0.0, 0.0);
+
+        // Viewport geometry
+        let focal_length = 1.0;
+        let theta = self.vertical_fov.clamp(0.0, 180.0).to_radians();
+        let h = (theta / 2.0).tan();
+        let viewport_height = 2.0 * h * focal_length;
+        let viewport_width = viewport_height * (image_width as f64) / (image_height as f64);
 
         let viewport_u = DVec3::new(viewport_width, 0.0, 0.0);
         let viewport_v = DVec3::new(0.0, -viewport_height, 0.0);
@@ -132,6 +135,11 @@ impl CameraBuilder {
     pub fn pixel(mut self, samples: i32, depth: i32) -> CameraBuilder {
         self.samples_per_pixel = samples;
         self.max_depth = depth;
+        return self;
+    }
+
+    pub fn fov(mut self, vertical_fov: f64) -> CameraBuilder {
+        self.vertical_fov = vertical_fov;
         return self;
     }
 }

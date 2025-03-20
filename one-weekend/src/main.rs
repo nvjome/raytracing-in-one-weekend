@@ -20,7 +20,7 @@ fn main() -> io::Result<()> {
     let samples_per_pixel = 100;
     let max_depth = 100;
 
-    let output = "output/builder1.ppm";
+    let output = "output/fov90.ppm";
 
     // Materials
     let material_ground = Material::Lambertian {
