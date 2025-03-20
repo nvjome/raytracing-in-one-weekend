@@ -20,7 +20,7 @@ fn main() -> io::Result<()> {
     let samples_per_pixel = 100;
     let max_depth = 100;
 
-    let output = "output/fov90.ppm";
+    let output = "output/focus1.ppm";
 
     // Materials
     let material_ground = Material::Lambertian {
@@ -47,16 +47,43 @@ fn main() -> io::Result<()> {
     // World
     let mut world = HittableList::new();
 
-    world.add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, material_ground)));
-    world.add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.2), 0.5, material_center)));
-    world.add(Box::new(Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5, material_left)));
-    world.add(Box::new(Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.4, material_bubble)));
-    world.add(Box::new(Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5, material_right)));
+    world.add(Box::new(Sphere::new(
+        Point3::new(0.0, -100.5, -1.0),
+        100.0,
+        material_ground
+    )));
+    world.add(Box::new(Sphere::new(
+        Point3::new(0.0, 0.0, -1.2),
+        0.5,
+        material_center
+    )));
+    world.add(Box::new(Sphere::new(
+        Point3::new(-1.0, 0.0, -1.0),
+        0.5,
+        material_left
+    )));
+    world.add(Box::new(Sphere::new(
+        Point3::new(-1.0, 0.0, -1.0),
+        0.4,
+        material_bubble
+    )));
+    world.add(Box::new(Sphere::new(
+        Point3::new(1.0, 0.0, -1.0),
+        0.5,
+        material_right
+    )));
 
     // Camera
     let camera = CameraBuilder::new()
         .image(image_width, image_height)
         .pixel(samples_per_pixel, max_depth)
+        .fov(20.0)
+        .position(
+            Point3::new(-2.0, 2.0, 1.0),
+            Point3::new(0.0, 0.0, -1.0)
+        )
+        .up(DVec3::new(0.0, 1.0, 0.0))
+        .focus(3.4, 10.0)
         .build();
 
     // Render image
