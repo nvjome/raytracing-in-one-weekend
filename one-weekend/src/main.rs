@@ -2,7 +2,10 @@ use std::{fs, io, sync::Arc, time::Instant};
 use glam::DVec3;
 use itertools::{self, Itertools};
 use raytracer::{
-    camera::Camera, hittable::HittableList, material::Material, sphere::Sphere
+    camera::CameraBuilder,
+    hittable::HittableList,
+    material::Material,
+    sphere::Sphere
 };
 
 type Point3 = DVec3;
@@ -12,11 +15,12 @@ fn main() -> io::Result<()> {
     let now = Instant::now();
     // Output
     let aspect_ratio = 16.0 / 9.0;
-    let image_width = 1920;
-    let samples_per_pixel = 500;
+    let image_width = 800;
+    let image_height = (((image_width as f64) / aspect_ratio) as i32).max(1);
+    let samples_per_pixel = 100;
     let max_depth = 100;
 
-    let output = "output/multithreaded4.ppm";
+    let output = "output/builder1.ppm";
 
     // Materials
     let material_ground = Material::Lambertian {
@@ -50,7 +54,10 @@ fn main() -> io::Result<()> {
     world.add(Box::new(Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5, material_right)));
 
     // Camera
-    let camera = Camera::new(image_width, aspect_ratio, samples_per_pixel, max_depth);
+    let camera = CameraBuilder::new()
+        .image(image_width, image_height)
+        .pixel(samples_per_pixel, max_depth)
+        .build();
 
     // Render image
     println!("Rendering...");

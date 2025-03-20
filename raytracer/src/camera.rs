@@ -13,7 +13,6 @@ pub struct Camera {
     position: DVec3,
     pub image_width: i32,
     pub image_height: i32,
-    pub aspect_ratio: f64,
     pixel_origin: DVec3,
     pixel_delta_u: DVec3,
     pixel_delta_v: DVec3,
@@ -22,39 +21,6 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(image_width: i32, aspect_ratio: f64, samples_per_pixel: i32, max_depth: i32) -> Camera {
-        let image_height = (((image_width as f64) / aspect_ratio) as i32).max(1);
-
-        // Viewport
-        let viewport_height = 2.0;
-        let viewport_width = viewport_height * (image_width as f64) / (image_height as f64);
-
-        // Camera geometry
-        let focal_length = 1.0;
-        let position = DVec3::new(0.0, 0.0, 0.0);
-
-        let viewport_u = DVec3::new(viewport_width, 0.0, 0.0);
-        let viewport_v = DVec3::new(0.0, -viewport_height, 0.0);
-        
-        let pixel_delta_u = viewport_u / image_width as f64;
-        let pixel_delta_v = viewport_v / image_height as f64;
-
-        let viewport_origin = position - DVec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
-        let pixel_origin = viewport_origin + 0.5 * (pixel_delta_u + pixel_delta_v);
-        
-        Camera {
-            position,
-            image_width,
-            image_height,
-            aspect_ratio,
-            pixel_origin,
-            pixel_delta_u,
-            pixel_delta_v,
-            samples_per_pixel,
-            max_depth,
-        }
-    }
-
     pub fn render(self, world: Arc<dyn Hittable>) -> Vec<(u32, u32, u32)> {
         let bar = ProgressBar::new(self.image_height as u64 * self.image_width as u64);
         bar.set_style(ProgressStyle::default_bar());
@@ -101,6 +67,72 @@ impl Camera {
             + ((j as f64 + offset.y) * self.pixel_delta_v);
         
         return Ray3::new(self.position, pixel_sample - self.position);
+    }
+}
+
+pub struct CameraBuilder {
+    pub image_width: i32,
+    pub image_height: i32,
+    pub samples_per_pixel: i32,
+    pub max_depth: i32,
+}
+
+impl CameraBuilder {
+    pub fn new() -> CameraBuilder {
+        // Some reasonable default settings
+        CameraBuilder {
+            image_width: 800,
+            image_height: 400,
+            samples_per_pixel: 10,
+            max_depth: 10,
+        }
+    }
+
+    pub fn build(self) -> Camera {
+        let image_width = self.image_width.max(1);
+        let image_height = self.image_height.max(1);
+        let samples_per_pixel = self.samples_per_pixel.max(1);
+        let max_depth = self.max_depth.max(1);
+
+        // Viewport
+        let viewport_height = 2.0;
+        let viewport_width = viewport_height * (image_width as f64) / (image_height as f64);
+
+        // Camera geometry
+        let focal_length = 1.0;
+        let position = DVec3::new(0.0, 0.0, 0.0);
+
+        let viewport_u = DVec3::new(viewport_width, 0.0, 0.0);
+        let viewport_v = DVec3::new(0.0, -viewport_height, 0.0);
+        
+        let pixel_delta_u = viewport_u / image_width as f64;
+        let pixel_delta_v = viewport_v / image_height as f64;
+
+        let viewport_origin = position - DVec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+        let pixel_origin = viewport_origin + 0.5 * (pixel_delta_u + pixel_delta_v);
+        
+        Camera {
+            position,
+            image_width,
+            image_height,
+            pixel_origin,
+            pixel_delta_u,
+            pixel_delta_v,
+            samples_per_pixel,
+            max_depth,
+        }
+    }
+
+    pub fn image(mut self, width: i32, height: i32) -> CameraBuilder {
+        self.image_width = width;
+        self.image_height = height;
+        return self;
+    }
+
+    pub fn pixel(mut self, samples: i32, depth: i32) -> CameraBuilder {
+        self.samples_per_pixel = samples;
+        self.max_depth = depth;
+        return self;
     }
 }
 
