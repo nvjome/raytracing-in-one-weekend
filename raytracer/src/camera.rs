@@ -122,7 +122,6 @@ impl CameraBuilder {
         let max_depth = self.max_depth.max(1);
 
         // Viewport dimensions
-        // let focal_length = (self.position - self.point_at).length();
         let theta = self.vertical_fov.clamp(0.0, 180.0).to_radians();
         let h = (theta / 2.0).tan();
         let viewport_height = 2.0 * h * self.focus_distance;
@@ -162,6 +161,7 @@ impl CameraBuilder {
         }
     }
 
+    // Modifier functions to edit camera parameters prior to building
     pub fn image(mut self, width: i32, height: i32) -> CameraBuilder {
         self.image_width = width;
         self.image_height = height;
