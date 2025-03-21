@@ -55,6 +55,6 @@ impl Hittable for Sphere {
 
         let record = HitRecord::with_face_normal(point, outward_normal, t, self.material, ray);
 
-        return Some(record);
+        Some(record)
     }
 }

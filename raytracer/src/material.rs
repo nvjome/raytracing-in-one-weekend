@@ -32,13 +32,13 @@ impl Material {
                     scattered_direction = record.normal;
                 }
 
-                return Some(Scattered {
+                Some(Scattered {
                     scattered: Ray3 {
                         origin: record.point,
                         direction: scattered_direction,
                     },
                     attenuation: albedo,
-                });
+                })
             },
 
             Material::Metal { albedo , fuzz} => {
@@ -50,12 +50,12 @@ impl Material {
                 let scattered = Ray3::new(record.point, reflected_direction);
 
                 if scattered.direction.dot(record.normal) > 0.0 {
-                    return Some(Scattered {
+                    Some(Scattered {
                         scattered,
                         attenuation: albedo,
-                    });
+                    })
                 } else {
-                    return None;
+                    None
                 }
                 
             },
@@ -76,38 +76,39 @@ impl Material {
 
                 let cannot_refract = refraction_index_corrected * sin_theta > 1.0;
 
-                let direction = match cannot_refract || (reflectance(cos_theta, refraction_index_corrected) > rng.random_range(0.0..1.0)) {
+                let direction = if cannot_refract || (reflectance(cos_theta, refraction_index_corrected) > rng.random_range(0.0..1.0)) {
                     // No refraction solution, so reflect
-                    true => reflect(unit_direction, record.normal),
+                    reflect(unit_direction, record.normal)
+                } else {
                     // Refract
-                    false => refract(unit_direction, record.normal, refraction_index_corrected),
+                    refract(unit_direction, record.normal, refraction_index_corrected)
                 };
 
-                return Some(Scattered {
+                Some(Scattered {
                     scattered: Ray3 {
                         origin: record.point,
                         direction,
                     },
                     attenuation,
-                });
+                })
             },
         }
     }
 }
 
 pub fn reflect(vector: DVec3, normal: DVec3) -> DVec3 {
-    return vector - 2.0 * vector.dot(normal) * normal;
+    vector - 2.0 * vector.dot(normal) * normal
 }
 
 pub fn refract(vector: DVec3, normal: DVec3, refraction_ratio: f64) -> DVec3 {
     let cos_theta = (-vector).dot(normal).min(1.0);
     let r_perpendicular = refraction_ratio * (vector + cos_theta * normal);
     let r_parallel = -(1.0 - r_perpendicular.length_squared()).abs().sqrt() * normal;
-    return r_perpendicular + r_parallel;
+    r_perpendicular + r_parallel
 }
 
 fn reflectance(cosine: f64, refraction_index: f64) -> f64 {
     let mut r0 = (1.0 - refraction_index) / (1.0 + refraction_index);
     r0 = r0*r0;
-    return r0 + (1.0 - r0)*(1.0 - cosine).powf(5.0);
+    r0 + (1.0 - r0)*(1.0 - cosine).powf(5.0)
 }

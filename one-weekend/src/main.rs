@@ -16,12 +16,12 @@ fn main() -> io::Result<()> {
     let now = Instant::now();
     // Output
     let aspect_ratio = 16.0 / 9.0;
-    let image_width = 1920;
+    let image_width = 200;
     let image_height = (((image_width as f64) / aspect_ratio) as i32).max(1);
     let samples_per_pixel = 500;
     let max_depth = 100;
 
-    let output = "output/final_scene.ppm";
+    let output = "output/final_scene_flame.ppm";
 
     let mut world = HittableList::new();
 

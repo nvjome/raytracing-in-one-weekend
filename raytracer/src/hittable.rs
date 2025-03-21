@@ -17,7 +17,7 @@ pub struct HitRecord {
 }
 
 impl HitRecord {
-    pub fn with_face_normal(point: DVec3, normal: DVec3, t: f64, material: Material, ray: Ray3, ) -> HitRecord {
+    pub fn with_face_normal(point: DVec3, normal: DVec3, t: f64, material: Material, ray: Ray3, ) -> Self {
         let (front_face, normal) = HitRecord::calculate_face_normal(ray, normal);
         HitRecord {
             point,
@@ -37,7 +37,7 @@ impl HitRecord {
             false => -outward_normal,
         };
 
-        return (front_face, normal);
+        (front_face, normal)
     }
 }
 
@@ -45,14 +45,20 @@ pub struct HittableList {
     objects: Vec<Box<dyn Hittable>>,
 }
 
+impl Default for HittableList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HittableList {
-    pub fn new() -> HittableList {
+    pub fn new() -> Self {
         HittableList {
             objects: Vec::<Box<dyn Hittable>>::new(),
         }
     }
 
-    pub fn new_with(object: Box<dyn Hittable>) -> HittableList {
+    pub fn new_with(object: Box<dyn Hittable>) -> Self {
         HittableList {
             objects: vec![object],
         }
@@ -87,6 +93,6 @@ impl Hittable for HittableList {
             }
         };
 
-        return closest_record;
+        closest_record
     }
 }

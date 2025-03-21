@@ -28,7 +28,7 @@ impl Camera {
         let bar = ProgressBar::new(self.image_height as u64 * self.image_width as u64);
         bar.set_style(ProgressStyle::default_bar());
         // Generate iterator for all pixels
-        let pixels = (0..self.image_height * self.image_width)
+        (0..self.image_height * self.image_width)
             .into_par_iter()
             .map(|index| {
                 // Extract (x, y) from iterator
@@ -39,7 +39,6 @@ impl Camera {
                 let scale_factor = (self.samples_per_pixel as f64).recip();
                 
                 let multisampled_pixel_color = (0..self.samples_per_pixel)
-                    .into_iter()
                     .map(|_| {
                         // Get a ray, then get the color of that ray
                         self.get_ray(x, y).color(self.max_depth, &*world)
@@ -58,9 +57,7 @@ impl Camera {
 
                 // Color tuple
                 (color.x as u32, color.y as u32, color.z as u32)
-            }).collect::<Vec<(u32, u32, u32)>>();
-
-        return pixels;
+            }).collect::<Vec<(u32, u32, u32)>>()
     }
 
     fn get_ray(&self, i: i32, j: i32) -> Ray3 {
@@ -75,12 +72,12 @@ impl Camera {
         };
         let direction = pixel_sample - origin;
         
-        return Ray3::new(origin, direction);
+        Ray3::new(origin, direction)
     }
 
     fn sample_defocus_disk(&self) -> DVec3 {
         let offset = vector_utils::random_in_unit_disk();
-        return self.location + (offset.x * self.defocus_disk_u) + (offset.y * self.defocus_disk_v);
+        self.location + (offset.x * self.defocus_disk_u) + (offset.y * self.defocus_disk_v)
     }
 }
 
@@ -97,8 +94,14 @@ pub struct CameraBuilder {
     defocus_angle: f64,
 }
 
+impl Default for CameraBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CameraBuilder {
-    pub fn new() -> CameraBuilder {
+    pub fn new() -> Self {
         // Some reasonable default settings
         CameraBuilder {
             image_width: 800,
@@ -162,39 +165,39 @@ impl CameraBuilder {
     }
 
     // Modifier functions to edit camera parameters prior to building
-    pub fn image(mut self, width: i32, height: i32) -> CameraBuilder {
+    pub fn image(mut self, width: i32, height: i32) -> Self {
         self.image_width = width;
         self.image_height = height;
-        return self;
+        self
     }
 
-    pub fn pixel(mut self, samples: i32, depth: i32) -> CameraBuilder {
+    pub fn pixel(mut self, samples: i32, depth: i32) -> Self {
         self.samples_per_pixel = samples;
         self.max_depth = depth;
-        return self;
+        self
     }
 
-    pub fn fov(mut self, vertical_fov: f64) -> CameraBuilder {
+    pub fn fov(mut self, vertical_fov: f64) -> Self {
         self.vertical_fov = vertical_fov;
-        return self;
+        self
     }
 
-    pub fn position(mut self, camera_location: DVec3, point_at: DVec3) -> CameraBuilder {
+    pub fn position(mut self, camera_location: DVec3, point_at: DVec3) -> Self {
         self.position = camera_location;
         self.point_at = point_at;
-        return self;
+        self
     }
 
     pub fn up(mut self, direction: DVec3) -> CameraBuilder {
         self.relative_up = direction;
-        return self;
+        self
     }
 
     pub fn focus(mut self, distance: f64, defocus: f64) -> CameraBuilder {
         self.focus_distance = distance;
         // Scale defocus value from range [0, 1] to angle [0, 180]
         self.defocus_angle = defocus.clamp(0.0, 180.0);
-        return self;
+        self
     }
 }
 
@@ -205,13 +208,13 @@ fn sample_square() -> DVec3 {
     let y: f64 = rng.random();
     let z: f64 = rng.random();
     // Final result should be within [-0.5, 0.5] in all dimensions
-    return DVec3::new(x - 0.5, y - 0.5, z - 0.5);
+    DVec3::new(x - 0.5, y - 0.5, z - 0.5)
 }
 
 fn linear_to_gamma(scalar: f64) -> f64 {
     if scalar > 0.0 {
-        return scalar.sqrt();
+        scalar.sqrt()
     } else {
-        return 0.0;
+        0.0
     }
 }

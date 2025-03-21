@@ -5,7 +5,7 @@ use rand::{self, Rng};
 
 // Generate a random unit vector
 pub fn random_unit_vector() -> DVec3 {
-    return random_in_unit_sphere().normalize();
+    random_in_unit_sphere().normalize()
 }
 
 // Generate a random vector in the unit sphere
@@ -48,14 +48,14 @@ pub fn random_in_unit_disk() -> DVec3 {
 pub fn random_in_unit_hemisphere(normal: &DVec3) -> DVec3 {
     let unit_vec = random_unit_vector();
     if unit_vec.dot(*normal) > 0.0 {
-        return unit_vec;
+        unit_vec
     } else {
-        return -unit_vec;
+        -unit_vec
     }
 }
 
 // Check for very small vectors
 pub fn near_zero(vector: DVec3) -> bool {{
     let s = 1e-8;
-    return vector.x < s && vector.y < s && vector.z < s;
+    vector.x < s && vector.y < s && vector.z < s
 }}
