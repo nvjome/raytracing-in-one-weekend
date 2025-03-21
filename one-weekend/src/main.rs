@@ -16,12 +16,12 @@ fn main() -> io::Result<()> {
     let now = Instant::now();
     // Output
     let aspect_ratio = 16.0 / 9.0;
-    let image_width = 200;
+    let image_width = 1920;
     let image_height = (((image_width as f64) / aspect_ratio) as i32).max(1);
     let samples_per_pixel = 500;
     let max_depth = 100;
 
-    let output = "output/final_scene_flame.ppm";
+    let output = "output/final_scene.ppm";
 
     let mut world = HittableList::new();
 
@@ -93,7 +93,7 @@ fn main() -> io::Result<()> {
     for a in -11..11 {
         for b in -11..11 {
             let choose_material: f64 = rng.random();
-            let center = Point3::new(a as f64 + 0.9 * rng.random::<f64>(), 0.2, b as f64 + 0.9 * rng.random::<f64>());
+            let center = Point3::new(a as f64 + 0.8 * rng.random::<f64>(), 0.2, b as f64 + 0.8 * rng.random::<f64>());
 
             if (center - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
                 let new_sphere = if choose_material < 0.8 {

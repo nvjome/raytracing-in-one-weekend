@@ -25,6 +25,7 @@ pub struct Camera {
 
 impl Camera {
     pub fn render(self, world: Arc<dyn Hittable>) -> Vec<(u32, u32, u32)> {
+        rayon::ThreadPoolBuilder::new().num_threads(6).build_global().unwrap();
         let bar = ProgressBar::new(self.image_height as u64 * self.image_width as u64);
         bar.set_style(ProgressStyle::default_bar());
         // Generate iterator for all pixels
